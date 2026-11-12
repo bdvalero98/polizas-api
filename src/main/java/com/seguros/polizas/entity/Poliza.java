@@ -1,6 +1,5 @@
 package com.seguros.polizas.entity;
 
-
 import com.seguros.polizas.enums.EstadoPoliza;
 import com.seguros.polizas.enums.TipoPoliza;
 import com.seguros.polizas.exception.BusinessException;
@@ -60,8 +59,29 @@ public class Poliza {
     }
 
     public Riesgo agregarRiesgoInicial(String direccionInmueble, String arrendatario) {
+
+        if (tipo == TipoPoliza.INDIVIDUAL && !riesgos.isEmpty()) {
+            throw new BusinessException("Una poliza individual solo puede tener 1 riesgo");
+        }
+
         Riesgo riesgo = new Riesgo(this, direccionInmueble, arrendatario);
         riesgos.add(riesgo);
+
+        return riesgo;
+    }
+
+    public Riesgo agregarRiesgo(String direccionInmueble, String arrendatario) {
+
+        if (tipo != TipoPoliza.COLECTIVA) {
+            throw new BusinessException("Solo se pueden agregar riesgos a polizas colectivas");
+        }
+
+        if (estado == EstadoPoliza.CANCELADA) {
+            throw new BusinessException("No se pueden agregar riesgos a una poliza cancelada");
+        }
+        Riesgo riesgo = new Riesgo(this, direccionInmueble, arrendatario);
+        riesgos.add(riesgo);
+
         return riesgo;
     }
 

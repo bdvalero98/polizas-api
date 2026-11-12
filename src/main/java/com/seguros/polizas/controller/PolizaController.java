@@ -1,12 +1,14 @@
 package com.seguros.polizas.controller;
 
 import com.seguros.polizas.dto.request.RenovarRequest;
+import com.seguros.polizas.dto.request.RiesgoRequest;
 import com.seguros.polizas.dto.response.PolizaResponse;
 import com.seguros.polizas.dto.response.RiesgoResponse;
 import com.seguros.polizas.enums.EstadoPoliza;
 import com.seguros.polizas.enums.TipoPoliza;
 import com.seguros.polizas.service.PolizaService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -42,5 +44,11 @@ public class PolizaController {
     @PostMapping("/{id}/cancelar")
     public PolizaResponse cancelarPoliza(@PathVariable Long id) {
         return polizaService.cancelarPoliza(id);
+    }
+
+    @PostMapping("/{id}/riesgos")
+    @ResponseStatus(HttpStatus.CREATED)
+    public RiesgoResponse agregarRiesgo(@PathVariable Long id, @Valid @RequestBody RiesgoRequest request) {
+        return polizaService.agregarRiesgo(id, request);
     }
 }
