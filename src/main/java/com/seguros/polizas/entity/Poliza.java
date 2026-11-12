@@ -3,6 +3,7 @@ package com.seguros.polizas.entity;
 
 import com.seguros.polizas.enums.EstadoPoliza;
 import com.seguros.polizas.enums.TipoPoliza;
+import com.seguros.polizas.exception.BusinessException;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
@@ -66,6 +67,30 @@ public class Poliza {
 
     private static BigDecimal calcularPrima(BigDecimal canon, int meses) {
         return canon.multiply(BigDecimal.valueOf(meses)).setScale(2, RoundingMode.HALF_UP);
+    }
+
+    public void renovar(BigDecimal ipc) {
+
+        if (estado == EstadoPoliza.CANCELADA) {
+            throw new BusinessException("No se puede renovar una poliza cancelada");
+        }
+
+        this.canonMensual = canonMensual.multiply(BigDecimal.ONE.add(ipc))
+                .setScale(2, RoundingMode.HALF_UP);
+        this.prima = calcularPrima(this.canonMensual, vigenciaMeses);
+        this.fechaInicio = this.fechaFin;
+        this.fechaFin = this.fechaInicio.plusMonths(vigenciaMeses);
+        this.estado = EstadoPoliza.RENOVADA;
+    }
+
+    public void cancelar() {
+
+        if (estado == EstadoPoliza.CANCELADA) {
+            throw new BusinessException("La poliza ya esta cancelada");
+        }
+
+        this.estado = EstadoPoliza.CANCELADA;
+        riesgos.forEach(Riesgo::cancelar);
     }
 
     public Long getId() {
