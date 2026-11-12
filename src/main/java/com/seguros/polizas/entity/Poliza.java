@@ -8,6 +8,8 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "polizas")
@@ -40,16 +42,26 @@ public class Poliza {
     @Column(nullable = false, precision = 15, scale = 2)
     private BigDecimal prima;
 
+    @OneToMany(mappedBy = "poliza", cascade = CascadeType.ALL)
+    private List<Riesgo> riesgos = new ArrayList<>();
+
     protected Poliza() {
     }
 
-    public Poliza(Long id, int vigenciaMeses, LocalDate fechaInicio, LocalDate fechaFin, BigDecimal canonMensual, BigDecimal prima) {
-        this.id = id;
+    public Poliza(TipoPoliza tipo, int vigenciaMeses, LocalDate fechaInicio, BigDecimal canonMensual) {
+
+        this.tipo = tipo;
         this.vigenciaMeses = vigenciaMeses;
         this.fechaInicio = fechaInicio;
-        this.fechaFin = fechaFin.plusMonths(vigenciaMeses);
+        this.fechaFin = fechaInicio.plusMonths(vigenciaMeses);
         this.canonMensual = canonMensual.setScale(2, RoundingMode.HALF_UP);
         this.prima = calcularPrima(this.canonMensual, vigenciaMeses);
+    }
+
+    public Riesgo agregarRiesgoInicial(String direccionInmueble, String arrendatario) {
+        Riesgo riesgo = new Riesgo(this, direccionInmueble, arrendatario);
+        riesgos.add(riesgo);
+        return riesgo;
     }
 
     private static BigDecimal calcularPrima(BigDecimal canon, int meses) {
@@ -86,5 +98,9 @@ public class Poliza {
 
     public BigDecimal getPrima() {
         return prima;
+    }
+
+    public List<Riesgo> getRiesgos() {
+        return riesgos;
     }
 }
