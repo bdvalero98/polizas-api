@@ -21,14 +21,20 @@ import java.util.List;
 @Service
 public class PolizaService {
 
+    private static final String EVENTO_ACTUALIZACION = "ACTUALIZACION";
+
     private final PolizaRepository polizaRepository;
     private final RiesgoRepository riesgoRepository;
     private final BigDecimal ipcPorDefecto;
+    private CoreGateway coreGateway;
 
-    public PolizaService(PolizaRepository polizaRepository, RiesgoRepository riesgoRepository,
+    public PolizaService(PolizaRepository polizaRepository,
+                         RiesgoRepository riesgoRepository,
+                         CoreGateway coreGateway,
                          @Value("${negocio.ipc-por-defecto}") BigDecimal ipcPorDefecto) {
         this.polizaRepository = polizaRepository;
         this.riesgoRepository = riesgoRepository;
+        this.coreGateway = coreGateway;
         this.ipcPorDefecto = ipcPorDefecto;
     }
 
@@ -54,8 +60,11 @@ public class PolizaService {
     @Transactional
     public PolizaResponse renovarPoliza(Long polizaId, BigDecimal ipc) {
         Poliza poliza = obtenerPoliza(polizaId);
+
         poliza.renovar(ipc != null ? ipc : ipcPorDefecto);
+
         polizaRepository.save(poliza);
+        coreGateway.notificarEvento(EVENTO_ACTUALIZACION, poliza.getId());
 
         return PolizaResponse.from(poliza);
     }
@@ -63,8 +72,11 @@ public class PolizaService {
     @Transactional
     public PolizaResponse cancelarPoliza(Long polizaId) {
         Poliza poliza = obtenerPoliza(polizaId);
+
         poliza.cancelar();
+
         polizaRepository.save(poliza);
+        coreGateway.notificarEvento(EVENTO_ACTUALIZACION, poliza.getId());
 
         return PolizaResponse.from(poliza);
     }
@@ -75,6 +87,7 @@ public class PolizaService {
         Riesgo riesgo = poliza.agregarRiesgo(request.direccionInmueble(), request.arrendatario());
 
         polizaRepository.saveAndFlush(poliza);
+        coreGateway.notificarEvento(EVENTO_ACTUALIZACION, poliza.getId());
 
         return RiesgoResponse.from(riesgo);
     }
@@ -91,7 +104,9 @@ public class PolizaService {
         }
 
         riesgo.cancelar();
+
         riesgoRepository.save(riesgo);
+        coreGateway.notificarEvento(EVENTO_ACTUALIZACION, riesgo.getPoliza().getId());
 
         return RiesgoResponse.from(riesgo);
     }
